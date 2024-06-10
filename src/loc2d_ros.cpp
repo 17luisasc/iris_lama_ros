@@ -267,6 +267,11 @@ void lama::Loc2DROS::onLaserScan(const sensor_msgs::LaserScanConstPtr& laser_sca
     lama::Pose2D odom(odom_tf.getOrigin().x(), odom_tf.getOrigin().y(),
                               tf::getYaw(odom_tf.getRotation()));
 
+    // // odom is global pose
+    // print "PREFIx x, y, yaw" odom.rotation()
+
+    // return;
+
 
     // Force an update if the last update was a long time ago.
     static ros::Time latest_update = laser_scan->header.stamp;

@@ -111,6 +111,7 @@ private:
     // == configuration variables ==
     std::string odom_frame_id_;         ///< Odometry frame id.
     std::string base_frame_id_;         ///< Robot base frame.
+    // std::string target_frame_id_;         ///< Robot target(base) frame.
 
     std::string scan_topic_;   ///< LaserScan message topic.
 

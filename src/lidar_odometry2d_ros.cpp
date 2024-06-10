@@ -45,6 +45,7 @@ lama::LidarOdometry2DROS::LidarOdometry2DROS()
 
     pnh_.param("odom_frame_id",   odom_frame_id_,   std::string("odom"));
     pnh_.param("base_frame_id",   base_frame_id_,   std::string("base_link"));
+    //pnh_.param("target_frame_id",   target_frame_id_,   std::string("base_link"));
 
     pnh_.param("scan_topic", scan_topic_, std::string("/scan"));
 
@@ -92,8 +93,8 @@ lama::LidarOdometry2DROS::LidarOdometry2DROS()
                                                             ros::TransportHints().tcpNoDelay());
 
     // Setup publishers
-    pose_pub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("pose", 2);
-    map_pub_  = nh_.advertise<nav_msgs::OccupancyGrid>("map",      1, true);
+    pose_pub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("odom_pose", 2);
+    map_pub_  = nh_.advertise<nav_msgs::OccupancyGrid>("odom_map", 1, true);
 
     ros_occ_.header.frame_id = odom_frame_id_;
 
@@ -178,6 +179,9 @@ void lama::LidarOdometry2DROS::onLaserScan(const sensor_msgs::LaserScanConstPtr&
     // We want to send a transform that is good up until a
     // tolerance time so that odom can be used
     ros::Time transform_expiration = (laser_scan->header.stamp + transform_tolerance_);
+    // tf::StampedTransform tmp_tf_stamped(latest_tf_,
+    //                                     transform_expiration,
+    //                                     odom_frame_id_, target_frame_id_);
     tf::StampedTransform tmp_tf_stamped(latest_tf_,
                                         transform_expiration,
                                         odom_frame_id_, base_frame_id_);
@@ -186,13 +190,15 @@ void lama::LidarOdometry2DROS::onLaserScan(const sensor_msgs::LaserScanConstPtr&
 
 bool lama::LidarOdometry2DROS::initLaser(const sensor_msgs::LaserScanConstPtr& laser_scan)
 {
+    //tf_->waitForTransform(base_frame_id_, laser_scan->header.frame_id, ros::Time(), ros::Duration(1.0));
+
     // find the origin of the sensor in the base frame
     tf::Stamped<tf::Pose> identity(tf::Transform(tf::createIdentityQuaternion(), tf::Vector3(0,0,0)),
                                    ros::Time(), laser_scan->header.frame_id);
     tf::Stamped<tf::Pose> laser_origin;
     try{ tf_->transformPose(base_frame_id_, identity, laser_origin); }
     catch(tf::TransformException& e)
-    { ROS_ERROR("Could not find origin of %s", laser_scan->header.frame_id.c_str()); return false; }
+    { ROS_ERROR("%s",e.what());ROS_ERROR("Could not find origin of %s", laser_scan->header.frame_id.c_str()); return false; }
 
     // Validate laser orientation (code taken from slam_gmapping)
     // create a point 1m above the laser position and transform it into the laser-frame
